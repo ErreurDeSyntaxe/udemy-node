@@ -1,7 +1,7 @@
 // const fs = require('fs');
 import fs from 'fs';
 import http from 'http';
-import url from 'url';
+// import url from 'url'; // outdated
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -42,9 +42,6 @@ const __dirname = dirname(__filename);
 /** FILES */
 /** +++++ */
 
-/** ++++++ */
-/** SERVER */
-
 // Reading the data once, instead of upon each request. Since this code is
 // executed once (at the beginning), it is OK to use blocking code.
 // It will not block often nor for a long time
@@ -81,26 +78,43 @@ const replaceTemplate = (temp, product) => {
   return output;
 };
 
+/** ++++++ */
+/** SERVER */
+
 const server = http.createServer((req, res) => {
-  const pathName = req.url;
+  // const { query, pathname } = url.parse(req.url, true);
+  const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+  const { searchParams, pathname } = reqUrl;
 
   // Overview Page
-  if (pathName === '/' || pathName === '/overview') {
+  if (pathname === '/' || pathname === '/overview') {
     res.writeHead(200, { 'Content-type': 'text/html' });
 
     const cardsHtml = dataObject
       .map((el) => replaceTemplate(tempCard, el))
       .join('');
-    console.log(cardsHtml);
 
     const output = tempOverview.replace('{%PRODUCT_CARDS%}', cardsHtml);
 
     res.end(output);
     // Product Page
-  } else if (pathName === '/product') {
-    res.end('This is the product.');
+  } else if (pathname === '/product') {
+    const product = dataObject[searchParams.get('id')];
+    if (!product) {
+      res.writeHead(404, {
+        'Content-type': 'text/html',
+        'my-own-header': 'hello-world',
+      });
+      res.end('<h1>Page not found</h1>');
+    } else {
+      const output = replaceTemplate(tempProduct, product);
+
+      res.writeHead(200, { 'Content-type': 'text/html' });
+      res.end(output);
+    }
+
     // API
-  } else if (pathName === '/api') {
+  } else if (pathname === '/api') {
     res.writeHead(200, { 'Content-type': 'application/json' });
     res.end(data);
   } else {
