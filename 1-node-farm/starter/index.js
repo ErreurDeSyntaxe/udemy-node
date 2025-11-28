@@ -1,13 +1,11 @@
 // const fs = require('fs');
 import fs from 'fs';
 import http from 'http';
-// import url from 'url'; // outdated
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import slugify from 'slugify';
+
 import { replaceTemplate } from './modules/replaceTemplate.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = import.meta.dirname;
 
 /** +++++ */
 /** FILES */
@@ -48,6 +46,7 @@ const __dirname = dirname(__filename);
 // It will not block often nor for a long time
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
 const dataObject = JSON.parse(data);
+const slugs = dataObject.map((el) => slugify(el.productName, { lower: true }));
 
 const tempCard = fs.readFileSync(
   `${__dirname}/templates/template-card.html`,
